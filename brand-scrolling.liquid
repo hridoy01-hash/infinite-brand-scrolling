@@ -2,9 +2,14 @@
   assign container_width = section.settings.container_width
   assign section_padding_bottom = section.settings.section_padding_bottom
   assign section_padding_top = section.settings.section_padding_top
+  assign section_margin_top = section.settings.section_margin_top
+  assign section_margin_bottom = section.settings.section_margin_bottom
   assign content_gap = section.settings.content_gap
   assign speed = section.settings.speed_control
   assign section_title = section.settings.section_title
+  assign heading_color = section.settings.heading_color
+  assign heading_font_size = section.settings.section_heading_font_size
+  assign section_bg = section.settings.background
 %}
 <style>
   /* Root variables for theming and responsiveness */
@@ -26,6 +31,9 @@
   #{{section.id}}{
     padding-top:{{section_padding_top}}px;
     padding-bottom:{{section_padding_bottom}}px;
+    margin-top:{{section_margin_top}}px;
+    margin-bottom:{{section_margin_bottom}}px;
+    background-color:{{section_bg}};
   }
 
   /* Marquee styling and animations */
@@ -86,7 +94,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgb(255, 255, 255);
+    background-color: transparent;
   }
 
   .{{section.id}}-marquee__group .{{section.id}}-scroll_content img {
@@ -119,10 +127,10 @@
   }
   .{{section.id}}-wrapper h2{
     font-weight: 600;
-    font-size: {{ section.settings.section_heading_font_size }}px;
+    font-size: {{ heading_font_size }}px;
     line-height: 145%;
     text-align: center;
-    color: #343b6d;
+    color: {{ heading_color }};
     margin: 0px;
     padding-bottom:20px;
     max-width: 620px;
@@ -147,12 +155,35 @@
       <div class="{{section.id}}-marquee__group">
         {% for block in section.blocks %}
           <div class="{{section.id}}-scroll_content">
-            <img
-              width="100%"
-              height="100%"
-              src="{{ block.settings.image | img_url: 'master' }}"
-              alt="brand-image"
-            >
+            {% case block.type %}
+              {% when 'image_content' %}
+                {% if block.settings.image != blank %}
+                  <img
+                    width="100%"
+                    height="100%"
+                    src="{{ block.settings.image | img_url: 'master' }}"
+                    alt="brand-image"
+                  >
+                {% endif %}
+
+              {% when 'text_content' %}
+                {% liquid
+                  assign text_content_color = block.settings.text_content_color
+                  assign text_content_font_size = block.settings.text_content_font_size
+                %}
+                {% style %}
+                  .{{section.id}}-marquee .text_content{
+                    color:{{text_content_color}};
+                    font-size:{{ text_content_font_size }}px;
+                    font-weight:500;
+                  }
+                {% endstyle %}
+                {% unless block.settings.text_content == blank %}
+                  <div class="text_content">{{ block.settings.text_content }}</div>
+                {% endunless %}
+              {% else %}
+                <p>Something wrong</p>
+            {% endcase %}
           </div>
         {% endfor %}
       </div>
@@ -161,128 +192,199 @@
 </section>
 {% schema %}
 {
-    "name": "Brand Scrolling",
-    "settings": [
+  "name": "Brand Scrolling",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "আমাদের পার্টনার"
+    },
+    {
+      "type": "range",
+      "id": "section_heading_font_size",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "Heading font size",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "container_width",
+      "min": 500,
+      "max": 2000,
+      "step": 100,
+      "unit": "px",
+      "label": "Container width",
+      "default": 1200
+    },
+    {
+      "type": "checkbox",
+      "id": "reverse_scroll",
+      "label": "Reverse Scroll",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "use_container",
+      "label": "Full Width",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Color"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "Background",
+      "default": "#efefef"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#343b6d"
+    },
+    {
+      "type": "header",
+      "content": "Space control"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "section_margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "Margin top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "Margin bottom",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "content_gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "Content gap",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Slide speed"
+    },
+    {
+      "type": "number",
+      "id": "speed_control",
+      "label": "Speed control",
+      "default": 60,
+      "info": "Number is per second"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image_content",
+      "name": "Image Content",
+      "settings": [
         {
-          "type": "text",
-          "id": "section_title",
-          "label": "Section Title",
-          "default": "আমাদের পার্টনার"
-        },
-        {
-          "type": "range",
-          "id": "section_heading_font_size",
-          "min": 10,
-          "max": 100,
-          "step": 1,
-          "unit": "px",
-          "label": "Heading font size",
-          "default": 32
-        },
-        {
-          "type": "range",
-          "id": "container_width",
-          "min": 500,
-          "max": 2000,
-          "step": 100,
-          "unit": "px",
-          "label": "Container width",
-          "default": 1200
-        },
-        {
-          "type": "checkbox",
-          "id": "reverse_scroll",
-          "label": "Reverse Scroll",
-          "default": false
-        },
-        {
-          "type": "checkbox",
-          "id": "use_container",
-          "label": "Full Width",
-          "default": true
-        },
-        {
-          "type": "range",
-          "id": "section_padding_top",
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": "px",
-          "label": "Padding top",
-          "default": 10
-        },
-        {
-          "type": "range",
-          "id": "section_padding_bottom",
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": "px",
-          "label": "Padding bottom",
-          "default": 10
-        },
-        {
-          "type": "range",
-          "id": "content_gap",
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": "px",
-          "label": "Content gap",
-          "default": 20
-        },
-
-        {
-          "type": "number",
-          "id": "speed_control",
-          "label": "Speed control",
-          "default": 60,
-          "info": "Number is per second"
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
         }
-    ],
-    "blocks": [
+      ]
+    },
+    {
+      "type": "text_content",
+      "name": "Text Content",
+      "settings": [
         {
-            "type": "scroll_content",
-            "name": "Scroll Content",
-            "settings": [
-                {
-                    "type": "image_picker",
-                    "id": "image",
-                    "label": "Image"
-                }
-            ]
-        }
-    ],
-    "presets": [
+          "type": "richtext",
+          "id": "text_content",
+          "label": "Text",
+          "default": "<p>Summer sale 25% OFF</p>"
+        },
         {
-            "name": "Brand Scrolling",
-          "blocks": [
-            {
-              "type": "scroll_content"
-            },
-            {
-              "type": "scroll_content"
-            },
-            {
-              "type": "scroll_content"
-            },
-            {
-              "type": "scroll_content"
-            },
-            {
-              "type": "scroll_content"
-            },
-            {
-              "type": "scroll_content"
-            },
-            {
-              "type": "scroll_content"
-            },
-            {
-              "type": "scroll_content"
-            }
-          ]
+          "type": "color",
+          "id": "text_content_color",
+          "label": "Text content color",
+          "default": "#000000"
+        },
+        {
+          "type": "range",
+          "id": "text_content_font_size",
+          "min": 6,
+          "max": 50,
+          "step": 2,
+          "unit": "px",
+          "label": "Text content font size",
+          "default": 18
         }
-    ]
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Brand Scrolling",
+      "blocks": [
+        {
+          "type": "image_content"
+        },
+        {
+          "type": "image_content"
+        },
+        {
+          "type": "image_content"
+        },
+        {
+          "type": "image_content"
+        },
+        {
+          "type": "image_content"
+        },
+        {
+          "type": "image_content"
+        },
+        {
+          "type": "image_content"
+        },
+        {
+          "type": "image_content"
+        }
+      ]
+    }
+  ]
 }
 {% endschema %}
